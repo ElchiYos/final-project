@@ -1,5 +1,8 @@
 #include "Header.h"
 
+#define CHUNK_BUF 10
+#define FIRST_CHUNK_BUF 200
+
 void printUserInstructions() {
 	printf("\t\t\t\t\t---------------------\n");
 	printf("\t\t\t\t\t| user instructions |\n");
@@ -15,25 +18,38 @@ void printUserInstructions() {
 	printf("\tquit:\tto exit from the program\n\n");
 	printf("Enter select \\ set \\ print \\ print-e \\ quit.\n");
 }
-
 char* readinput(FILE* fp) {
 	char* input = NULL, * temp;
-	char tempbuf[10];
+	char firstBuf[FIRST_CHUNK_BUF];
+	char tempbuf[CHUNK_BUF];
 	int inputlen = 0, templen = 0;
-	do {
-		if (fgets(tempbuf, 10, fp) == NULL) return NULL; // receiving 10 characters from the user, if the end of the file is reached, NULL will be returned 
-		templen = (int)strlen(tempbuf); //
-		temp = realloc(input, inputlen + templen + 1); // allocation of space for the input according to the new size
-		input = temp; // avoid warnings
-		if (input == NULL) {
-			return input;
-		}
-		strcpy(input + inputlen, tempbuf);
-		inputlen += templen;
-	} while (templen == 10 - 1 && tempbuf[10 - 2] != '\n');// Stop condition if less than 10 characters are received or the last character is '\n'
-	input[strlen(input) - 1] = '\0'; // delete the '\n'
+
+	if (fgets(firstBuf, FIRST_CHUNK_BUF, fp) == NULL) return NULL;
+	inputlen = (int)strlen(firstBuf);
+	input = malloc(inputlen * sizeof(char) + 1);
+	if (input == NULL) {
+		return input;
+	}
+	strcpy(input, firstBuf);
+	if (inputlen == FIRST_CHUNK_BUF - 1 && firstBuf[inputlen - 2] != '\n') {
+		do {
+			fgets(tempbuf, CHUNK_BUF, fp); // receiving 10 characters from the user, if the end of the file is reached, NULL will be returned
+			templen = (int)strlen(tempbuf);
+			temp = realloc(input, inputlen + templen + 1); // allocation of space for the input according to the new size
+			input = temp; // avoid warnings
+			if (input == NULL) {
+				return input;
+			}
+			strcpy(input + inputlen, tempbuf);
+			inputlen += templen;
+		} while (templen == CHUNK_BUF - 1 && tempbuf[CHUNK_BUF - 2] != '\n');// Stop condition if less than 10 characters are received or the last character is '\n'
+
+	}
+
+	input[inputlen - 1] = '\0'; // delete the '\n'
 	return input;
 }
+
 
 void CreateList(struct manageList* list, struct manageList* listError, FILE* fp) {
 	struct client* temp = NULL, * prevPtr, * ptr;
@@ -49,12 +65,14 @@ void CreateList(struct manageList* list, struct manageList* listError, FILE* fp)
 			continue;
 		}
 		if (checkIfAllFieldFull(temp)) {
-			free(temp);
+			//freeNode(temp);
+			temp->error = temp->error * 10 + 8;
+			addToHead(listError, temp);
 			continue;
 		}
 		checkIfTheDataIsCorrect(temp);
 		serchIfExist(list, temp, &prevPtr, &ptr); // if exist inserts values into prevPtr and ptr
-		if (ptr != NULL && (strcmp(ptr->firstName, temp->firstName) || strcmp(ptr->lastName, temp->lastName))) ///if ID exist but difrent name
+		if (ptr != NULL && (strcmp(ptr->firstName, temp->firstName) || strcmp(ptr->lastName, temp->lastName))) //if ID exist but difrent name
 			temp->error = temp->error * 10 + 9;
 
 		if (temp->error > 0) {
@@ -101,9 +119,11 @@ struct client* createNode(char* line) { // entering values end return struct
 	newClient->phoneNum = _strdup(token);//In Linux, the underscore must be deleted
 
 	token = strtok(NULL, ",");
-	newClient->debt = (float)atof(token);
 	if (token!=NULL && checkIfAllNumbers(token)) { // checks if input from a given file and checks the correctness of the input
 		newClient->error = newClient->error * 10 + 5;
+	}
+	else {
+	newClient->debt = (float)atof(token);
 	}
 	token = strtok(NULL, ",");
 	if (token != NULL && (checkIfAllNumbers(token) || enterStrToDate(token, &newClient->date) != 3)) { // checks if input from a given file and checks the correctness of the input
@@ -137,21 +157,21 @@ void addBySort(struct manageList* list, struct client* temp)
 		ptr = ptr->next;
 	}
 
-	if (ptr == list->head) {
-		if (ptr->debt < temp->debt) { //enter befor the head
+	//if (ptr == list->head) {
+		if (ptr == list->head && ptr->debt < temp->debt) { //enter befor the head
 			addToHead(list, temp);
-			return;
-		}
-		else { // enter after the head
-			temp->next = list->head->next;
-			list->head->next = temp;
-			if (temp->next == NULL) {
-				list->tail = temp;
-			}
+		//	return;
+		//}
+		//else { // enter after the head
+		//	temp->next = list->head->next;
+		//	list->head->next = temp;
+		//	if (temp->next == NULL) {
+		//		list->tail = temp;
+		//	}
 			list->size++;
 			return;
 		}
-	}
+	//}
 	list->size++;
 	temp->next = ptr->next;
 	ptr->next = temp;
@@ -230,6 +250,9 @@ void printError(struct client* ptr) {
 		digit = num % 10;
 		switch (digit)
 		{
+		case 8:
+			printf("| %-85s|\n", "missing data field");
+			break;
 		case 1:
 			printf("| %-85s|\n", "the first name is wrong");
 			break;
@@ -287,7 +310,7 @@ int checkIfTheDataIsCorrect(struct client* temp) {
 		temp->error = temp->error * 10 + 3;
 		flag = 1;
 	}
-	if ((strlen(temp->phoneNum) > 10 || strlen(temp->phoneNum) < 9 || checkIfAllNumbers(temp->phoneNum))) { // check phone number
+	if ((strlen(temp->phoneNum) > 10 || strlen(temp->phoneNum) < 9 ||(strlen(temp->phoneNum) == 10 && temp->phoneNum[0] != '0') || checkIfAllNumbers(temp->phoneNum))) { // check phone number
 		temp->error = temp->error * 10 + 4;
 		flag = 1;
 	}
@@ -485,40 +508,40 @@ int selectFiled(struct manageList* list, char* line) {
 
 void findField(struct manageList* list, char* fieldName, int(*compare)(void*, void*), void* comp, char op) {
 	struct client* ptrList = list->head;
-	int flagToList = 0;
-	int flagToNode;
+	int flagFromList = 0;
+	int flagFromNode;
 
 	while (ptrList) {
-		flagToNode = 0;
+		flagFromNode = 0;
 			switch (op)
 			{
 			case '=':
 				if (compare(ptrList, comp) == 0 && ptrList->debt <= 0) 
-					flagToNode = 1;
+					flagFromNode = 1;
 				break;
 			case '!':
 					if (compare(ptrList, comp) != 0 && ptrList->debt <= 0) 
-						flagToNode = 1;
+						flagFromNode = 1;
 				break;
 			case '>':
 					if (compare(ptrList, comp) > 0 && ptrList->debt <= 0) 
-						flagToNode = 1;
+						flagFromNode = 1;
 				break;
 			case '<':
 					if (compare(ptrList, comp) < 0 && ptrList->debt <= 0) 
-						flagToNode = 1;
+						flagFromNode = 1;
 				break;
 			default: 
 				break;
 			}
 		
-		if(flagToNode == 1) {
+		if(flagFromNode == 1) {
 			printNode(ptrList);
-			flagToList = 1;
+			flagFromList = 1;
 		}
 		ptrList = ptrList->next;
 	}
-	if (flagToList == 0) {
+	if (flagFromList == 0) {
 		printf("the %s not found.\n", fieldName);
 	}
 	else
@@ -625,9 +648,9 @@ void writeToFile(struct client* temp, char* nameOfFile) {
 
 
 char* removeAllSpaces(char* input) {
-	char* out = input, * put = input;
+	char* out = input, *put = input;
 	for (; *input != '\0'; ++input) {
-		if (*input != ' ')//
+		if (*input != ' ')
 			*put++ = *input;
 	}
 	*put = '\0';

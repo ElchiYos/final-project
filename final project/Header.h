@@ -4,6 +4,9 @@
 #define _Header
 
 #define _CRT_SECURE_NO_WARNINGS
+#define _CRTDBG_MAP_ALLOC
+#include <crtdbg.h>
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -23,13 +26,13 @@ struct client {
 	char* id;
 	char* phoneNum;
 	struct client* next;
-}client;
+};
 
 struct manageList {
 	struct client* head;
 	struct client* tail;
 	int size;
-}manageList;
+};
 
 //										****Elchanan Yosipov****
 
@@ -266,11 +269,11 @@ void printUserInstructions();
 /* General:			specific functions for comparison
 * Parameters:		var1, var2 - The fields that are intended for comparison
 Return value:		0 if the variables are equal, a positive number if var1 is greater than var2 and negative number if var2 is greater than var1 */
-int compareFirstName(void* var1, void* var2);
-int compareLastName(void* var1, void* var2);
-int compareID(void* var1, void* var2);
-int comparePhone(void* var1, void* var2);
-int compareDebt(void* var1, void* var2);
-int compareDates(void* var1, void* var2);
+int compareFirstName(struct client* node, void* var2);
+int compareLastName(struct client* node, void* var2);
+int compareID(struct client* node, void* var2);
+int comparePhone(struct client* node, void* var2);
+int compareDebt(struct client* node, void* var2);
+int compareDates(struct client* node, void* var2);
 
 #endif

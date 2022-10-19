@@ -35,14 +35,13 @@ int compareDates(struct client* node, void* var2) {
 
 int main() {
 	_CrtSetDbgFlag(_CRTDBG_ALLOC_MEM_DF | _CRTDBG_LEAK_CHECK_DF);
-	/*struct client* head;
-	struct client* headError;*/
-	struct manageList storeList = { 0 }, manageError = { 0 }; // Creating 2 lists for client and errors, and resetting them
+	struct client* head = NULL;
+	struct client* headError = NULL;
 	char* queriesLine; // pointer to a request to be received from the user
 	char* tempChoose; // a temporary variable that will point to the user's choice (select/set/print/qwit)
 	char choosing[MAX_CHOOSE] = { 0 }; //  a variable that will point to the user's choice (select/set/print/qwit)
 	FILE* fp = NULL;
-	char* nameOfFile = (char*)malloc(sizeof(char) * strlen(NAME_FILE));
+	char* nameOfFile = (char*)malloc(sizeof(char) * strlen(NAME_FILE) + 1);
 	if (nameOfFile != NULL) { // if the assignment was successful
 		strcpy(nameOfFile, NAME_FILE);
 		fp = fopen(nameOfFile, "r");
@@ -57,10 +56,10 @@ int main() {
 		fp = fopen(nameOfFile, "r");
 	}
 
-	CreateList(&storeList, &manageError, fp); // Creating the lists of client and errors by reading from the file
-	printList(&storeList, "list"); //printing the client list
+	CreateList(&head, &headError, fp); // Creating the lists of client and errors by reading from the file
+	printList(head, "list"); //printing the client list
 	printf("\nERROR LIST\n");
-	printList(&manageError, "error list"); // printing the error list
+	printList(headError, "error list"); // printing the error list
 	fclose(fp);
 
 	printUserInstructions();
@@ -68,13 +67,13 @@ int main() {
 	while (strcmp(choosing, "quit") != 0) { // stop condition when user enters quit
 		printf("--->\n");
 		queriesLine = readinput(stdin);// receiving from the user and allocating memory
-		tempChoose = oneQuerie(&storeList, &manageError, queriesLine, nameOfFile); // analyzes the user request
+		tempChoose = oneQuerie(&head, &headError, queriesLine, nameOfFile); // analyzes the user request
 		strcpy(choosing, tempChoose); // so that it is possible to free tempChoose
 		free(tempChoose);
 		free(queriesLine);
 	}
 	free(nameOfFile);
-	freeList(&storeList);
-	freeList(&manageError);
+	freeList(&head);
+	freeList(&headError);
 	return 0;
 }

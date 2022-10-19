@@ -1,57 +1,6 @@
 #include "Header.h"
 
-#define CHUNK_BUF 10
-#define FIRST_CHUNK_BUF 200
-
-void printUserInstructions() {
-	printf("\t\t\t\t\t---------------------\n");
-	printf("\t\t\t\t\t| user instructions |\n");
-	printf("\t\t\t\t\t---------------------\n\n");
-	printf("\tChoose one of the options\n");
-	printf("\tselect:\tto search for a field from the data\n");
-	printf("\t\tthere are 4 search options '=' '!=' '>' '<'\n");
-	printf("\tFor example: select debt < -100\n");
-	printf("\tset:\tto insert new data into the file\n");
-	printf("\tFor example: set first name=Avi, second name=Sem, id=123456789, phone=0586533563, date=08/08/2022, debt=-50\n");
-	printf("\tprint:\tto print the list of debtors\n");
-	printf("\tprint-e:to print the list of error\n");
-	printf("\tquit:\tto exit from the program\n\n");
-	printf("Enter select \\ set \\ print \\ print-e \\ quit.\n");
-}
-char* readinput(FILE* fp) {
-	char* input = NULL, * temp;
-	char firstBuf[FIRST_CHUNK_BUF];
-	char tempbuf[CHUNK_BUF];
-	int inputlen = 0, templen = 0;
-
-	if (fgets(firstBuf, FIRST_CHUNK_BUF, fp) == NULL) return NULL;
-	inputlen = (int)strlen(firstBuf);
-	input = malloc(inputlen * sizeof(char) + 1);
-	if (input == NULL) {
-		return input;
-	}
-	strcpy(input, firstBuf);
-	if (inputlen == FIRST_CHUNK_BUF - 1 && firstBuf[inputlen - 2] != '\n') {
-		do {
-			fgets(tempbuf, CHUNK_BUF, fp); // receiving 10 characters from the user, if the end of the file is reached, NULL will be returned
-			templen = (int)strlen(tempbuf);
-			temp = realloc(input, inputlen + templen + 1); // allocation of space for the input according to the new size
-			input = temp; // avoid warnings
-			if (input == NULL) {
-				return input;
-			}
-			strcpy(input + inputlen, tempbuf);
-			inputlen += templen;
-		} while (templen == CHUNK_BUF - 1 && tempbuf[CHUNK_BUF - 2] != '\n');// Stop condition if less than 10 characters are received or the last character is '\n'
-
-	}
-
-	input[inputlen - 1] = '\0'; // delete the '\n'
-	return input;
-}
-
-
-void CreateList(struct manageList* list, struct manageList* listError, FILE* fp) {
+void CreateList(struct client** head, struct client** headError, FILE* fp) {
 	struct client* temp = NULL, * prevPtr, * ptr;
 	char* line;
 
@@ -65,18 +14,17 @@ void CreateList(struct manageList* list, struct manageList* listError, FILE* fp)
 			continue;
 		}
 		if (checkIfAllFieldFull(temp)) {
-			//freeNode(temp);
-			temp->error = temp->error * 10 + 8;
-			addToHead(listError, temp);
+			temp->error = temp->error | (1 << fieldlessErr);
+			addToHead(headError, temp);
 			continue;
 		}
 		checkIfTheDataIsCorrect(temp);
-		serchIfExist(list, temp, &prevPtr, &ptr); // if exist inserts values into prevPtr and ptr
+		serchIfExist(*head, temp, &prevPtr, &ptr); // if exist inserts values into prevPtr and ptr
 		if (ptr != NULL && (strcmp(ptr->firstName, temp->firstName) || strcmp(ptr->lastName, temp->lastName))) //if ID exist but difrent name
-			temp->error = temp->error * 10 + 9;
+			temp->error = temp->error | (1 << nameToIdErr);
 
 		if (temp->error > 0) {
-			addToHead(listError, temp);// insert into a listError  
+			addToHead(headError, temp);// insert into a error list  
 			continue;
 		}
 
@@ -84,17 +32,17 @@ void CreateList(struct manageList* list, struct manageList* listError, FILE* fp)
 			ptr->debt += temp->debt; // The debt scheme
 			updateDateAndPhone(ptr, temp); // update date
 
-			if (list->head->next != NULL)  // if there is only one node in the list, there is no need to sort
-				sortPtr(list, prevPtr); // new sort by new debt
+			if ((*head)->next != NULL)  // if there is only one node in the list, there is no need to sort
+				sortPtr(head, prevPtr); // new sort by new debt
 			freeNode(temp);
 			continue;
 		}
 
-		if (list->head == NULL) { // if the list empty
-			addToHead(list, temp);
+		if (*head == NULL) { // if the list empty
+			addToHead(head, temp);
 			continue;
 		}
-		addBySort(list, temp); // add node by sort
+		addBySort(head, temp); // add node by sort
 	}
 }
 
@@ -120,67 +68,47 @@ struct client* createNode(char* line) { // entering values end return struct
 
 	token = strtok(NULL, ",");
 	if (token!=NULL && checkIfAllNumbers(token)) { // checks if input from a given file and checks the correctness of the input
-		newClient->error = newClient->error * 10 + 5;
+		newClient->error = newClient->error | (1 << debtErr);
 	}
 	else {
 	newClient->debt = (float)atof(token);
 	}
 	token = strtok(NULL, ",");
 	if (token != NULL && (checkIfAllNumbers(token) || enterStrToDate(token, &newClient->date) != 3)) { // checks if input from a given file and checks the correctness of the input
-		newClient->error = newClient->error * 10 + 6;
+		newClient->error = newClient->error | (1 << dateErr);
 	}
 	free(line);
 	return newClient;
 }
 
-
-void addToHead(struct manageList* list, struct client* temp)
+void addToHead(struct client** head, struct client* temp)
 {
-	list->size++;
-	if (list->head == NULL) // if the list empty
-	{
-		list->tail = temp;
-	}
-
-	temp->next = list->head;
-	list->head = temp;
+	temp->next = *head;
+	*head = temp;
 }
 
-
-void addBySort(struct manageList* list, struct client* temp)
+void addBySort(struct client** head, struct client* temp)
 {
-	struct client* ptr = list->head;
+	struct client* ptr = *head;
 	while (ptr->next) {
 		if (ptr->next->debt < temp->debt) // find the prev of smaller value
 			break;
 
 		ptr = ptr->next;
 	}
-
-	//if (ptr == list->head) {
-		if (ptr == list->head && ptr->debt < temp->debt) { //enter befor the head
-			addToHead(list, temp);
-		//	return;
-		//}
-		//else { // enter after the head
-		//	temp->next = list->head->next;
-		//	list->head->next = temp;
-		//	if (temp->next == NULL) {
-		//		list->tail = temp;
-		//	}
-			list->size++;
-			return;
-		}
-	//}
-	list->size++;
+	
+	if (ptr == *head && ptr->debt < temp->debt) { //enter befor the head
+		addToHead(head, temp);
+		return;
+	}
+	
 	temp->next = ptr->next;
 	ptr->next = temp;
-	if (temp->next == NULL)
-		list->tail = temp;
+
 }
 
-void serchIfExist(struct manageList* list, struct client* temp, struct client** prevPtrSame, struct client** ptrSame) {
-	struct client* ptr = list->head, * prev = list->head;
+void serchIfExist(struct client* head, struct client* temp, struct client** prevPtrSame, struct client** ptrSame) {
+	struct client* ptr = head, * prev = head;
 	while (ptr) {
 		if (temp->id != NULL && atoi(ptr->id) == atoi(temp->id)) // check if same id
 		{
@@ -188,17 +116,16 @@ void serchIfExist(struct manageList* list, struct client* temp, struct client** 
 			*ptrSame = ptr;
 			return;
 		}
-		if (ptr != list->head) //Not promoting the prev for the first time
+		if (ptr != head) //Not promoting the prev for the first time
 			prev = prev->next;
 		ptr = ptr->next;
 	}
 }
 
-void sortPtr(struct manageList* list, struct client* prevPtr) {
+void sortPtr(struct client** head, struct client* prevPtr) {
 	struct client* ptr = prevPtr->next; // ptr = the node that needs to be re-sorted
 	prevPtr->next = ptr->next; // Removing "ptr" from the list
-	list->size--; //subtraction from the size of the list because the next function adds 1 to the list
-	addBySort(list, ptr); // re-added in sorted form
+	addBySort(head, ptr); // re-added in sorted form
 	return;
 }
 
@@ -212,136 +139,7 @@ void updateDateAndPhone(struct client* node, struct client* temp) {
 	}
 }
 
-void printList(struct manageList* list, char* nameOfList) {
-	struct client* ptr = list->head;
-	if (ptr == NULL) {
-		printf("The %s is empty.\n", nameOfList);
-		return;
-	}
-	printf("+--------------------------------------------------------------------------------------+\n");
-	printf("|   first name   |    last name   |     id      |   phone    |    debt    |    date    |\n");
-	while (ptr) {
-		if (ptr->debt <= 0) 
-			printNode(ptr);
-		ptr = ptr->next;
-	}
-	printf("+----------------+----------------+-------------+------------+------------+------------+\n");
-	printf("\n");
-}
-
-void printNode(struct client* ptr) {
-	printf("+----------------+----------------+-------------+------------+------------+------------+\n");
-	printf("| %-14s ", ptr->firstName);
-	printf("| %-14s ", ptr->lastName);
-	printf("|  %09s  ", ptr->id);
-	printf("| %010s ", ptr->phoneNum);
-	printf("| %10.2f ", ptr->debt);
-	printf("| %02d/%02d/%04d |\n", ptr->date.day, ptr->date.month, ptr->date.year);
-	if (ptr->error > 0) {
-		printf("+----------------+----------------+-------------+------------+------------+------------+\n");
-		printError(ptr);
-	}
-}
-
-void printError(struct client* ptr) {
-	int num, digit;
-	num = ptr->error;
-	while (num != 0) {
-		digit = num % 10;
-		switch (digit)
-		{
-		case 8:
-			printf("| %-85s|\n", "missing data field");
-			break;
-		case 1:
-			printf("| %-85s|\n", "the first name is wrong");
-			break;
-		case 2:
-			printf("| %-85s|\n", "the last name is wrong");
-			break;
-		case 3:
-			printf("| %-85s|\n", "the ID is wrong");
-			break;
-		case 4:
-			printf("| %-85s|\n", "the phone number is wrong");
-			break;
-		case 5:
-			printf("| %-85s|\n", "the debt is wrong");
-			break;
-		case 6:
-			printf("| %-85s|\n", "the date is wrong");
-			break;
-		case 9:
-			printf("| %-85s|\n", "the name does not match the ID");
-			break;
-		}
-		num /= 10;
-	}
-}
-
-void fromUpperToLower(char* str) {
-	char* ptrStr = str;
-	while (*ptrStr != '\0') {
-		if (*ptrStr >= 'A' && *ptrStr <= 'Z')
-			*ptrStr += ' ';
-		ptrStr++;
-	}
-}
-
-int checkIfAllFieldFull(struct client* temp) {
-	if (temp->date.day == 0 || temp->date.month == 0 || temp->date.year == 0 ||temp->firstName == NULL || 
-		temp->lastName == NULL || temp->id == NULL || temp->phoneNum == NULL) //checking if all fields exist
-		return 1; 
-	return 0;
-}
-
-int checkIfTheDataIsCorrect(struct client* temp) {
-	int flag = 0;
-	
-	if ( checkIfAllLetters(temp->firstName)) { // check first name
-		temp->error = temp->error * 10 + 1;
-		flag = 1;
-	}
-	if (checkIfAllLetters(temp->lastName)) { // check last name
-		temp->error = temp->error * 10 + 2;
-		flag = 1;
-	}
-	if ((strlen(temp->id) > 9 || strlen(temp->id) < 5 || checkIfAllNumbers(temp->id))) { // check id
-		temp->error = temp->error * 10 + 3;
-		flag = 1;
-	}
-	if ((strlen(temp->phoneNum) > 10 || strlen(temp->phoneNum) < 9 ||(strlen(temp->phoneNum) == 10 && temp->phoneNum[0] != '0') || checkIfAllNumbers(temp->phoneNum))) { // check phone number
-		temp->error = temp->error * 10 + 4;
-		flag = 1;
-	}
-
-	if (flag == 1) return 1;
-	return 0;
-}
-
-int checkIfAllLetters(char* str) {
-	char* ptrStr = str;
-	while (*ptrStr != '\0') {
-		if (*ptrStr >= 'a' && *ptrStr <= 'z' || *ptrStr == ' ')
-			ptrStr++;
-		else return 1;
-	}
-	return 0;
-}
-
-int checkIfAllNumbers(char* str) {
-	char* ptrStr = str;
-	while (*ptrStr != '\0') {
-		if (*ptrStr >= '0' && *ptrStr <= '9' || *ptrStr == '-' || *ptrStr == '.' || *ptrStr == '/')
-			ptrStr++;
-		else return 1;
-	}
-	return 0;
-}
-
-
-
-char* oneQuerie(struct manageList* list, struct manageList* errorList, char* querie, char* nameOfFile) {
+char* oneQuerie(struct client** head, struct client** headError, char* querie, char* nameOfFile) {
 	int flag = 0, tempScan; // temp to avoid a warning
 	char* token;
 	char* choosing = (char*)malloc(8 * (sizeof(char)));
@@ -355,7 +153,7 @@ char* oneQuerie(struct manageList* list, struct manageList* errorList, char* que
 		token = strtok(querie, ",");
 		do
 		{
-			flag = selectFiled(list, token);// returned 1 if there is error
+			flag = selectFiled(*head, token);// returned 1 if there is error
 			if (flag) {
 				return choosing;
 			}
@@ -364,13 +162,13 @@ char* oneQuerie(struct manageList* list, struct manageList* errorList, char* que
 
 	else if (strcmp(choosing, "set") == 0) {  // if the user selects "set"
 		struct client* temp = NULL, * ptr = NULL, * prevPtr = NULL;
-		temp = setNewLine(list, querie);
+		temp = setNewLine(querie);
 		if (temp == NULL) {
 			return choosing;
 		}
-		serchIfExist(list, temp, &prevPtr, &ptr); // if exist inserts values into prevPtr and ptr
+		serchIfExist(*head, temp, &prevPtr, &ptr); // if exist inserts values into prevPtr and ptr
 		if (ptr != NULL && (strcmp(ptr->firstName, temp->firstName) || strcmp(ptr->lastName, temp->lastName)))//if ID exist but difrent name
-			temp->error = temp->error * 10 + 9;
+			temp->error = temp->error | (1 << nameToIdErr);
 
 		if (temp->error > 0) {
 			printError(temp);
@@ -384,27 +182,25 @@ char* oneQuerie(struct manageList* list, struct manageList* errorList, char* que
 			ptr->debt += temp->debt; // The debt scheme
 			updateDateAndPhone(ptr, temp); // update date
 
-			if (list->head->next != NULL)  // if not list with 1 node
-				sortPtr(list, prevPtr); // new sort by new debt
+			if ((*head)->next != NULL)  // if not list with 1 node
+				sortPtr(head, prevPtr); // new sort by new debt
 
 			freeNode(temp);
 		}
 		else {
-			if (list->head == NULL)
-				addToHead(list, temp);
+			if (*head == NULL)
+				addToHead(head, temp);
 			else
-				addBySort(list, temp);
+				addBySort(head, temp);
 		}
-
 		return choosing;
-
 	}
 
 	else if (strcmp(choosing, "print") == 0) {  // if the user selects "print"
 		if (!strcmp(querie, "print-e"))
-			printList(errorList, "error list");
+			printList(*headError, "error list");
 		else
-			printList(list, "list");
+			printList(*head, "list");
 	}
 	else if (strcmp(choosing, "quit") == 0) {  // if the user selects "quit"
 		printf("bye bye.");
@@ -413,12 +209,11 @@ char* oneQuerie(struct manageList* list, struct manageList* errorList, char* que
 	else {
 		printf("You must enter: select\\set\\print\\quit, Please try again.\n");
 	}
-
 	return choosing;
 }
 
-int selectFiled(struct manageList* list, char* line) {
-	struct client* ptrList = list->head;
+int selectFiled(struct client* head, char* line) {
+	struct client* ptrList = head;
 	char* ptr = line + 6; // ptr without the first word
 	char op;
 	char* select = (char*)malloc((strlen(ptr) + 1) * sizeof(char));
@@ -449,7 +244,7 @@ int selectFiled(struct manageList* list, char* line) {
 			free(select);
 			return 1;
 		}
-		findField(list, "first name", compareFirstName, ptr, op);
+		findField(head, "first name", compareFirstName, ptr, op);
 	}
 	else if (!strcmp(select, "lastname")) {
 		if (checkIfAllLetters(ptr)) {
@@ -457,7 +252,7 @@ int selectFiled(struct manageList* list, char* line) {
 			free(select);
 			return 1;
 		}
-		findField(list, "last name", compareLastName, ptr, op);
+		findField(head, "last name", compareLastName, ptr, op);
 	}
 	else if (!strcmp(select, "debt")) {
 		if (checkIfAllNumbers(ptr)) {
@@ -466,7 +261,7 @@ int selectFiled(struct manageList* list, char* line) {
 			return 1;
 		}
 		float debt = (float)atof(ptr);
-		findField(list, "debt", compareDebt, &debt, op);
+		findField(head, "debt", compareDebt, &debt, op);
 	}
 	else if (!strcmp(select, "date")) {
 		int numScaned;
@@ -477,7 +272,7 @@ int selectFiled(struct manageList* list, char* line) {
 			free(select);
 			return 1;
 		}
-		findField(list, "date", compareDates, &tempDate, op);
+		findField(head, "date", compareDates, &tempDate, op);
 	}
 	else if (!strcmp(select, "id")) {
 		if (strlen(ptr) > 9 || strlen(ptr) < 5 || checkIfAllNumbers(ptr)) { // check id
@@ -485,7 +280,7 @@ int selectFiled(struct manageList* list, char* line) {
 			free(select);
 			return 1;
 		}
-		findField(list, "id", compareID, ptr, op);
+		findField(head, "id", compareID, ptr, op);
 	}
 	else if (!strcmp(select, "phonenum")) {
 		if (strlen(ptr) > 10 || strlen(ptr) < 9 || checkIfAllNumbers(ptr)) { // check phone number
@@ -493,7 +288,7 @@ int selectFiled(struct manageList* list, char* line) {
 			free(select);
 			return 1;
 		}
-		findField(list, "phone num", comparePhone, ptr, op);
+		findField(head, "phone num", comparePhone, ptr, op);
 	}
 
 	else {
@@ -505,50 +300,49 @@ int selectFiled(struct manageList* list, char* line) {
 	return 0;
 }
 
-
-void findField(struct manageList* list, char* fieldName, int(*compare)(void*, void*), void* comp, char op) {
-	struct client* ptrList = list->head;
-	int flagFromList = 0;
-	int flagFromNode;
+void findField(struct client* head, char* fieldName, int(*compare)(void*, void*), void* comp, char op) {
+	struct client* ptrList = head;
+	int flagForList = 0;
+	int flagForNode;
 
 	while (ptrList) {
-		flagFromNode = 0;
+		flagForNode = 0;
 			switch (op)
 			{
 			case '=':
 				if (compare(ptrList, comp) == 0 && ptrList->debt <= 0) 
-					flagFromNode = 1;
+					flagForNode = 1;
 				break;
 			case '!':
 					if (compare(ptrList, comp) != 0 && ptrList->debt <= 0) 
-						flagFromNode = 1;
+						flagForNode = 1;
 				break;
 			case '>':
 					if (compare(ptrList, comp) > 0 && ptrList->debt <= 0) 
-						flagFromNode = 1;
+						flagForNode = 1;
 				break;
 			case '<':
 					if (compare(ptrList, comp) < 0 && ptrList->debt <= 0) 
-						flagFromNode = 1;
+						flagForNode = 1;
 				break;
 			default: 
 				break;
 			}
 		
-		if(flagFromNode == 1) {
+		if(flagForNode == 1) {
 			printNode(ptrList);
-			flagFromList = 1;
+			flagForList = 1;
 		}
 		ptrList = ptrList->next;
 	}
-	if (flagFromList == 0) {
+	if (flagForList == 0) {
 		printf("the %s not found.\n", fieldName);
 	}
 	else
 		printf("+----------------+----------------+-------------+------------+------------+------------+\n");
 }
 
-struct client* setNewLine(struct manageList* list, char* line) {
+struct client* setNewLine(char* line) {
 	struct client* temp;
 	char* token;
 	temp = (struct client*)calloc(sizeof(struct client), 1);
@@ -587,7 +381,7 @@ struct client* setNewLine(struct manageList* list, char* line) {
 		else if (!strncmp(token, "date=", 5)) {
 			token += 5;
 			if (checkIfAllNumbers(token) || enterStrToDate(token, &temp->date) != 3) {
-				temp->error = temp->error * 10 + 6;
+				temp->error = temp->error | (1 << dateErr);
 				return temp;
 			}
 		}
@@ -595,7 +389,7 @@ struct client* setNewLine(struct manageList* list, char* line) {
 		else if (!strncmp(token, "debt=", 5)) {
 			token += 5;
 			if (checkIfAllNumbers(token)) {
-				temp->error = temp->error * 10 + 5;
+				temp->error = temp->error | (1 << debtErr);
 				return temp;
 			}
 			temp->debt = (float)atof(token);
@@ -628,7 +422,6 @@ int enterStrToDate(char* str, struct Date* temp) {
 	return numScaned;
 }
 
-
 void writeToFile(struct client* temp, char* nameOfFile) {
 	FILE* fp = fopen(nameOfFile, "a");
 	if (fp == NULL) {
@@ -646,18 +439,6 @@ void writeToFile(struct client* temp, char* nameOfFile) {
 	printf("the data was saved successfully.\n");
 }
 
-
-char* removeAllSpaces(char* input) {
-	char* out = input, *put = input;
-	for (; *input != '\0'; ++input) {
-		if (*input != ' ')
-			*put++ = *input;
-	}
-	*put = '\0';
-
-	return out;
-}
-
 void freeNode(struct client* temp) {
 	free(temp->firstName);
 	free(temp->lastName);
@@ -666,11 +447,11 @@ void freeNode(struct client* temp) {
 	free(temp);
 }
 
-void freeList(struct manageList* list) {
+void freeList(struct client** head) {
 	struct client* temp = NULL;
-	while (list->head != NULL) {
-		temp = list->head;
-		list->head = list->head->next;
+	while (*head != NULL) {
+		temp = *head;
+		*head = (*head)->next;
 		freeNode(temp);
 	}
 }

@@ -1,4 +1,7 @@
+#include "Debtors manager.h"
 #include "Header.h"
+
+
 #define NAME_FILE "list.csv"
 #define MAX_CHOOSE 7
 

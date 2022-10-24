@@ -1,5 +1,9 @@
 #pragma once
 
+#include "Debtors manager.h"
+
+
+//-------------------------------------------------------------------------------------------------------
 
 /* General:			printing instructions for use at the beginning of the program
 * Parameters:			none
@@ -32,4 +36,5 @@ void printError(struct client* ptr);
 
 
 //-------------------------------------------------------------------------------------------------------
+
 

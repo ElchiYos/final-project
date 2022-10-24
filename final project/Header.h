@@ -3,38 +3,14 @@
 #ifndef _Header
 #define _Header
 
-#define _CRT_SECURE_NO_WARNINGS
-#define _CRTDBG_MAP_ALLOC
-#include <crtdbg.h>
+#include "Debtors manager.h"
 
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
 
 #include "Prints.h"
 #include "Checks.h"
 #include "Utilities.h"
 
-struct Date {
-	char day;
-	char month;
-	short year;
-};
 
-struct client {
-	unsigned char error;
-	float debt;
-	struct Date date;
-	char* firstName;
-	char* lastName;
-	char* id;
-	char* phoneNum;
-	struct client* next;
-};
-
-typedef enum {
-	fieldlessErr, firstNameErr, lastNameErr, idErr, phoneErr, debtErr, dateErr, nameToIdErr
-}errorNum;
 
 //										****Elchanan Yosipov****
 
@@ -128,7 +104,7 @@ int selectFiled(struct client* head, char* line);
 /* General:			when the user chooses set, allocates memory to the struct and puts the values into it
 * Parameters:		line - gets the input the user entered
 * Return value:		a pointer to the new struct */
-struct client* setNewLine( char* line);
+struct client* setNewLine(char* line);
 
 
 //-------------------------------------------------------------------------------------------------------

@@ -21,9 +21,30 @@
     <ClCompile Include="func.c">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="Utilities.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="Checks.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="Prints.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Header.h">
+      <Filter>Source Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Utilities.h">
+      <Filter>Source Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Checks.h">
+      <Filter>Source Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Prints.h">
+      <Filter>Source Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Debtors manager.h">
       <Filter>Source Files</Filter>
     </ClInclude>
   </ItemGroup>

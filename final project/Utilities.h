@@ -1,8 +1,8 @@
 
 #pragma once
+#include "Debtors manager.h"
 
-#include <stdio.h>
-
+//-------------------------------------------------------------------------------------------------------
 
 /* General:			read from FILE* and allocates memory according to the size of the string
 * Parameters:		fp - a pointer to the file from which the string will be read

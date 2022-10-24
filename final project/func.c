@@ -1,3 +1,4 @@
+#include "Debtors manager.h"
 #include "Header.h"
 
 void CreateList(struct client** head, struct client** headError, FILE* fp) {
@@ -67,11 +68,11 @@ struct client* createNode(char* line) { // entering values end return struct
 	newClient->phoneNum = _strdup(token);//In Linux, the underscore must be deleted
 
 	token = strtok(NULL, ",");
-	if (token!=NULL && checkIfAllNumbers(token)) { // checks if input from a given file and checks the correctness of the input
+	if (token != NULL && checkIfAllNumbers(token)) { // checks if input from a given file and checks the correctness of the input
 		newClient->error = newClient->error | (1 << debtErr);
 	}
 	else {
-	newClient->debt = (float)atof(token);
+		newClient->debt = (float)atof(token);
 	}
 	token = strtok(NULL, ",");
 	if (token != NULL && (checkIfAllNumbers(token) || enterStrToDate(token, &newClient->date) != 3)) { // checks if input from a given file and checks the correctness of the input
@@ -96,12 +97,12 @@ void addBySort(struct client** head, struct client* temp)
 
 		ptr = ptr->next;
 	}
-	
+
 	if (ptr == *head && ptr->debt < temp->debt) { //enter befor the head
 		addToHead(head, temp);
 		return;
 	}
-	
+
 	temp->next = ptr->next;
 	ptr->next = temp;
 
@@ -147,7 +148,7 @@ char* oneQuerie(struct client** head, struct client** headError, char* querie, c
 	fromUpperToLower(querie);//change to lower case
 	tempScan = sscanf(querie, "%[^ -]7s", choosing); //token with the first word
 	querie = removeAllSpaces(querie);
-	
+
 	if (strcmp(choosing, "select") == 0) // if the user selects "select"
 	{
 		token = strtok(querie, ",");
@@ -275,7 +276,7 @@ int selectFiled(struct client* head, char* line) {
 		findField(head, "date", compareDates, &tempDate, op);
 	}
 	else if (!strcmp(select, "id")) {
-		if (strlen(ptr) > 9 || strlen(ptr) < 5 || checkIfAllNumbers(ptr)) { // check id
+		if (checkID(ptr)) { // check id
 			printf("the ID is wrong\n");
 			free(select);
 			return 1;
@@ -283,7 +284,7 @@ int selectFiled(struct client* head, char* line) {
 		findField(head, "id", compareID, ptr, op);
 	}
 	else if (!strcmp(select, "phonenum")) {
-		if (strlen(ptr) > 10 || strlen(ptr) < 9 || checkIfAllNumbers(ptr)) { // check phone number
+		if (checkPhone(ptr)) { // check phone number
 			printf("the phone number is wrong\n");
 			free(select);
 			return 1;
@@ -299,7 +300,6 @@ int selectFiled(struct client* head, char* line) {
 	free(select);
 	return 0;
 }
-
 void findField(struct client* head, char* fieldName, int(*compare)(void*, void*), void* comp, char op) {
 	struct client* ptrList = head;
 	int flagForList = 0;
@@ -307,29 +307,29 @@ void findField(struct client* head, char* fieldName, int(*compare)(void*, void*)
 
 	while (ptrList) {
 		flagForNode = 0;
-			switch (op)
-			{
-			case '=':
-				if (compare(ptrList, comp) == 0 && ptrList->debt <= 0) 
-					flagForNode = 1;
-				break;
-			case '!':
-					if (compare(ptrList, comp) != 0 && ptrList->debt <= 0) 
-						flagForNode = 1;
-				break;
-			case '>':
-					if (compare(ptrList, comp) > 0 && ptrList->debt <= 0) 
-						flagForNode = 1;
-				break;
-			case '<':
-					if (compare(ptrList, comp) < 0 && ptrList->debt <= 0) 
-						flagForNode = 1;
-				break;
-			default: 
-				break;
-			}
-		
-		if(flagForNode == 1) {
+		switch (op)
+		{
+		case '=':
+			if (compare(ptrList, comp) == 0 && ptrList->debt <= 0)
+				flagForNode = 1;
+			break;
+		case '!':
+			if (compare(ptrList, comp) != 0 && ptrList->debt <= 0)
+				flagForNode = 1;
+			break;
+		case '>':
+			if (compare(ptrList, comp) > 0 && ptrList->debt <= 0)
+				flagForNode = 1;
+			break;
+		case '<':
+			if (compare(ptrList, comp) < 0 && ptrList->debt <= 0)
+				flagForNode = 1;
+			break;
+		default:
+			break;
+		}
+
+		if (flagForNode == 1) {
 			printNode(ptrList);
 			flagForList = 1;
 		}
@@ -409,15 +409,7 @@ int enterStrToDate(char* str, struct Date* temp) {
 	int numScaned; // The number of data captured
 	numScaned = sscanf(str, "%2hhd/%2hhd/%4hd", &temp->day, &temp->month, &temp->year);
 	if (numScaned == 3) {
-		if (temp->day > 31 || temp->day <= 0) {
-			numScaned--;
-		}
-		if (temp->month > 12 || temp->month <= 0) {
-			numScaned--;
-		}
-		if (temp->year > 2100 || temp->year <= 0) {
-			numScaned--;
-		}
+		numScaned = checkDate(*temp); // if the date is incorrect returned 0
 	}
 	return numScaned;
 }

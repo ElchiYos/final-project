@@ -139,11 +139,18 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="Checks.c" />
     <ClCompile Include="func.c" />
     <ClCompile Include="main.c" />
+    <ClCompile Include="Prints.c" />
+    <ClCompile Include="Utilities.c" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="Checks.h" />
+    <ClInclude Include="Debtors manager.h" />
     <ClInclude Include="Header.h" />
+    <ClInclude Include="Prints.h" />
+    <ClInclude Include="Utilities.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

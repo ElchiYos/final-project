@@ -147,7 +147,7 @@
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Checks.h" />
-    <ClInclude Include="Debtors manager.h" />
+    <ClInclude Include="Debtors_manager.h" />
     <ClInclude Include="Header.h" />
     <ClInclude Include="Prints.h" />
     <ClInclude Include="Utilities.h" />

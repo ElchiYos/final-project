@@ -44,7 +44,7 @@
     <ClInclude Include="Prints.h">
       <Filter>Source Files</Filter>
     </ClInclude>
-    <ClInclude Include="Debtors manager.h">
+    <ClInclude Include="Debtors_manager.h">
       <Filter>Source Files</Filter>
     </ClInclude>
   </ItemGroup>

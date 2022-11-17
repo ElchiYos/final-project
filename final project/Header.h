@@ -3,7 +3,7 @@
 #ifndef _Header
 #define _Header
 
-#include "Debtors manager.h"
+#include "Debtors_manager.h"
 
 
 #include "Prints.h"
@@ -21,7 +21,7 @@
 					headError - Head of the error list
 					fp = a pointer to the file from which the data is read
 * Return value:		none */
-void CreateList(struct client** head, struct client** headError, FILE* fp);
+void createList(struct client** head, struct client** headError, FILE* fp);
 
 
 //-------------------------------------------------------------------------------------------------------
@@ -141,7 +141,7 @@ void freeList(struct client** head);
 					comp - a generic variable that contains the thing to be compared
 					op - the operator the user entered ( = / != / > / < )
 * Return value:		none */
-void findField(struct client* head, char* fieldName, int(*compar)(void*, void*), void* comp, char op);
+void findField(struct client* head, char* fieldName, int(*compar)(struct client*, void*), void* comp, char op);
 
 
 //-------------------------------------------------------------------------------------------------------

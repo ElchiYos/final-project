@@ -1,5 +1,9 @@
 #pragma once
-#include "Debtors manager.h"
+
+#ifndef _checks
+#define _checks
+
+#include "Debtors_manager.h"
 
 //-------------------------------------------------------------------------------------------------------
 
@@ -57,3 +61,40 @@ int checkID(char* ID);
 int checkPhone(char* phone);
 
 //-------------------------------------------------------------------------------------------------------
+
+/* General:			checks if all strings are numbers or '/'
+* Parameters:		str - the string being tested
+* Return value:		0 if all are numbers or '/' and 1 if not */
+int isDateCorrect(char* str);
+
+//-------------------------------------------------------------------------------------------------------
+
+/* General:			checks if all strings are numbers '-' or '.'
+* Parameters:		str - the string being tested
+* Return value:		0 if all are numbers '-' or '.' and 1 if not */
+int isDebtCorrect(char* str);
+
+//-------------------------------------------------------------------------------------------------------
+
+/* General:			checks if char is digit
+* Parameters:		ch - the char being tested
+* Return value:		0 if char digit and 1 if not */
+int isDigit(char ch);
+
+//-------------------------------------------------------------------------------------------------------
+
+/* General:			checks if char are letter
+* Parameters:		ch - the char being tested
+* Return value:		0 if char is letter and 1 if not */
+int isLetter(char ch);
+
+//-------------------------------------------------------------------------------------------------------
+
+/* General:			checks if char is space 
+* Parameters:		ch - the char being tested
+* Return value:		0 if char is space and 1 if not */
+int isSpace(char ch);
+
+//-------------------------------------------------------------------------------------------------------
+
+#endif

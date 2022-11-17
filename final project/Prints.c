@@ -2,19 +2,19 @@
 
 
 void printUserInstructions() {
-	printf("\t\t\t\t\t---------------------\n");
-	printf("\t\t\t\t\t| user instructions |\n");
-	printf("\t\t\t\t\t---------------------\n\n");
-	printf("\tChoose one of the options\n");
-	printf("\tselect:\tto search for a field from the data\n");
-	printf("\t\tthere are 4 search options '=' '!=' '>' '<'\n");
-	printf("\tFor example: select debt < -100\n");
-	printf("\tset:\tto insert new data into the file\n");
-	printf("\tFor example: set first name=Avi, second name=Sem, id=123456789, phone=0586533563, date=08/08/2022, debt=-50\n");
-	printf("\tprint:\tto print the list of debtors\n");
-	printf("\tprint-e:to print the list of error\n");
-	printf("\tquit:\tto exit from the program\n\n");
-	printf("Enter select \\ set \\ print \\ print-e \\ quit.\n");
+	puts("\t\t\t\t\t---------------------");
+	puts("\t\t\t\t\t| user instructions |");
+	puts("\t\t\t\t\t---------------------\n");
+	puts("\tChoose one of the options");
+	puts("\tselect:\tto search for a field from the data");
+	puts("\t\tthere are 4 search options '=' '!=' '>' '<'");
+	puts("\tFor example: select debt < -100\n");
+	puts("\tset:\tto insert new data into the file");
+	puts("\tFor example: set first name=Avi, second name=Sem, id=123456789, phone=0586533563, date=08/08/2022, debt=-50\n");
+	puts("\tprint:\tto print the list of debtors\n");
+	puts("\tprint-e:to print the list of error\n");
+	puts("\tquit:\tto exit from the program\n\n");
+	puts("Enter select \\ set \\ print \\ print-e \\ quit.");
 }
 
 void printList(struct client* head, char* nameOfList) {
@@ -23,19 +23,19 @@ void printList(struct client* head, char* nameOfList) {
 		printf("The %s is empty.\n", nameOfList);
 		return;
 	}
-	printf("+--------------------------------------------------------------------------------------+\n");
-	printf("|   first name   |    last name   |     id      |   phone    |    debt    |    date    |\n");
+	puts("+--------------------------------------------------------------------------------------+");
+	puts("|   first name   |    last name   |     id      |   phone    |    debt    |    date    |");
 	while (ptr) {
 		if (ptr->debt <= 0)
 			printNode(ptr);
 		ptr = ptr->next;
 	}
-	printf("+----------------+----------------+-------------+------------+------------+------------+\n");
-	printf("\n");
+	puts("+----------------+----------------+-------------+------------+------------+------------+");
+	puts("\n");
 }
 
 void printNode(struct client* ptr) {
-	printf("+----------------+----------------+-------------+------------+------------+------------+\n");
+	puts("+----------------+----------------+-------------+------------+------------+------------+");
 	printf("| %-14s ", ptr->firstName);
 	printf("| %-14s ", ptr->lastName);
 	printf("|  %09s  ", ptr->id);
@@ -43,7 +43,7 @@ void printNode(struct client* ptr) {
 	printf("| %10.2f ", ptr->debt);
 	printf("| %02d/%02d/%04d |\n", ptr->date.day, ptr->date.month, ptr->date.year);
 	if (ptr->error > 0) {
-		printf("+----------------+----------------+-------------+------------+------------+------------+\n");
+		puts("+----------------+----------------+-------------+------------+------------+------------+");
 		printError(ptr);
 	}
 }

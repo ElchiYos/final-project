@@ -1,7 +1,6 @@
-#include "Debtors manager.h"
 #include "Header.h"
 
-void CreateList(struct client** head, struct client** headError, FILE* fp) {
+void createList(struct client** head, struct client** headError, FILE* fp) {
 	struct client* temp = NULL, * prevPtr, * ptr;
 	char* line;
 
@@ -11,7 +10,7 @@ void CreateList(struct client** head, struct client** headError, FILE* fp) {
 		prevPtr = NULL, ptr = NULL;
 		temp = createNode(line);// creat new struct
 		if (temp == NULL) {
-			printf("There is a problem with memory allocation\n");
+			puts("There is a problem with memory allocation");
 			continue;
 		}
 		if (checkIfAllFieldFull(temp)) {
@@ -68,14 +67,14 @@ struct client* createNode(char* line) { // entering values end return struct
 	newClient->phoneNum = _strdup(token);//In Linux, the underscore must be deleted
 
 	token = strtok(NULL, ",");
-	if (token != NULL && checkIfAllNumbers(token)) { // checks if input from a given file and checks the correctness of the input
+	if (token != NULL && isDebtCorrect(token)) { // checks if input from a given file and checks the correctness of the input
 		newClient->error = newClient->error | (1 << debtErr);
 	}
 	else {
 		newClient->debt = (float)atof(token);
 	}
 	token = strtok(NULL, ",");
-	if (token != NULL && (checkIfAllNumbers(token) || enterStrToDate(token, &newClient->date) != 3)) { // checks if input from a given file and checks the correctness of the input
+	if (token != NULL && (isDateCorrect(token) || enterStrToDate(token, &newClient->date) != 3)) { // checks if input from a given file and checks the correctness of the input
 		newClient->error = newClient->error | (1 << dateErr);
 	}
 	free(line);
@@ -173,7 +172,7 @@ char* oneQuerie(struct client** head, struct client** headError, char* querie, c
 
 		if (temp->error > 0) {
 			printError(temp);
-			printf("You nust enter: set first name=... , second name=... ,id=... , phone=... , date=... , debt=...\n");
+			puts("You nust enter: set first name=... , second name=... ,id=... , phone=... , date=... , debt=...");
 			freeNode(temp);
 			return choosing;
 		}
@@ -204,44 +203,44 @@ char* oneQuerie(struct client** head, struct client** headError, char* querie, c
 			printList(*head, "list");
 	}
 	else if (strcmp(choosing, "quit") == 0) {  // if the user selects "quit"
-		printf("bye bye.");
+		fputs("bye bye.", stdout);
 	}
 
 	else {
-		printf("You must enter: select\\set\\print\\quit, Please try again.\n");
+		puts("You must enter: select\\set\\print\\quit, Please try again.");
 	}
 	return choosing;
 }
 
 int selectFiled(struct client* head, char* line) {
 	struct client* ptrList = head;
-	char* ptr = line + 6; // ptr without the first word
+	char* ptr = line + strlen("select"); // ptr without the first word
 	char op;
 	char* select = (char*)malloc((strlen(ptr) + 1) * sizeof(char));
 	int temp; // to avoid a warning
 	if (select == NULL) {
-		printf("There is a problem with memory allocation\n");
+		puts("There is a problem with memory allocation");
 		return 1;
 	}
 	temp = sscanf(ptr, "%[^=!><]s", select);
 	ptr = ptr + strlen(select);
 	if (*ptr == '\0') { // if the user did not enter an operator
 		free(select);
-		printf("The input is incorrect\n");
+		puts("The input is incorrect");
 		return 1;
 	}
 	op = *ptr; // inserting the operator into the variable
 	ptr++;
 	if (op == '!' && *ptr != '=') { //if there is no '=' after the '!'
 		free(select);
-		printf("The input is incorrect\n");
+		puts("The input is incorrect");
 		return 1;
 	}
 	else if (op == '!' && *ptr == '=') ptr++;
 
 	if (!strcmp(select, "firstname")) {
 		if (checkIfAllLetters(ptr)) {
-			printf("The name should only be letters\n");
+			puts("The name should only be letters");
 			free(select);
 			return 1;
 		}
@@ -249,15 +248,15 @@ int selectFiled(struct client* head, char* line) {
 	}
 	else if (!strcmp(select, "lastname")) {
 		if (checkIfAllLetters(ptr)) {
-			printf("The name should only be letters\n");
+			puts("The name should only be letters");
 			free(select);
 			return 1;
 		}
 		findField(head, "last name", compareLastName, ptr, op);
 	}
 	else if (!strcmp(select, "debt")) {
-		if (checkIfAllNumbers(ptr)) {
-			printf("The debt need to be number only\n");
+		if (isDebtCorrect(ptr)) {
+			puts("The debt need to be number only");
 			free(select);
 			return 1;
 		}
@@ -268,8 +267,8 @@ int selectFiled(struct client* head, char* line) {
 		int numScaned;
 		struct Date tempDate;
 		numScaned = enterStrToDate(ptr, &tempDate);
-		if (numScaned < 3 || checkIfAllNumbers(ptr)) {
-			printf("The date is wrong\n");
+		if (numScaned < 3 || isDateCorrect(ptr)) {
+			puts("The date is wrong");
 			free(select);
 			return 1;
 		}
@@ -277,7 +276,7 @@ int selectFiled(struct client* head, char* line) {
 	}
 	else if (!strcmp(select, "id")) {
 		if (checkID(ptr)) { // check id
-			printf("the ID is wrong\n");
+			puts("the ID is wrong");
 			free(select);
 			return 1;
 		}
@@ -285,7 +284,7 @@ int selectFiled(struct client* head, char* line) {
 	}
 	else if (!strcmp(select, "phonenum")) {
 		if (checkPhone(ptr)) { // check phone number
-			printf("the phone number is wrong\n");
+			puts("the phone number is wrong");
 			free(select);
 			return 1;
 		}
@@ -293,14 +292,14 @@ int selectFiled(struct client* head, char* line) {
 	}
 
 	else {
-		printf("you must select first name\\last name\\debt\\date\\id\\phone num\n");
+		puts("you must select first name\\last name\\debt\\date\\id\\phone num");
 		free(select);
 		return 1; // there is error
 	}
 	free(select);
 	return 0;
 }
-void findField(struct client* head, char* fieldName, int(*compare)(void*, void*), void* comp, char op) {
+void findField(struct client* head, char* fieldName, int(*compare)(struct client*, void*), void* comp, char op) {
 	struct client* ptrList = head;
 	int flagForList = 0;
 	int flagForNode;
@@ -339,7 +338,7 @@ void findField(struct client* head, char* fieldName, int(*compare)(void*, void*)
 		printf("the %s not found.\n", fieldName);
 	}
 	else
-		printf("+----------------+----------------+-------------+------------+------------+------------+\n");
+		puts("+----------------+----------------+-------------+------------+------------+------------+");
 }
 
 struct client* setNewLine(char* line) {
@@ -347,7 +346,7 @@ struct client* setNewLine(char* line) {
 	char* token;
 	temp = (struct client*)calloc(sizeof(struct client), 1);
 	if (temp == NULL) {
-		printf("There is a problem with memory allocation\n");
+		puts("There is a problem with memory allocation");
 		return temp;
 	}
 	line = removeAllSpaces(line);
@@ -380,7 +379,7 @@ struct client* setNewLine(char* line) {
 
 		else if (!strncmp(token, "date=", 5)) {
 			token += 5;
-			if (checkIfAllNumbers(token) || enterStrToDate(token, &temp->date) != 3) {
+			if (isDateCorrect(token) || enterStrToDate(token, &temp->date) != 3) {
 				temp->error = temp->error | (1 << dateErr);
 				return temp;
 			}
@@ -388,7 +387,7 @@ struct client* setNewLine(char* line) {
 
 		else if (!strncmp(token, "debt=", 5)) {
 			token += 5;
-			if (checkIfAllNumbers(token)) {
+			if (isDebtCorrect(token)) {
 				temp->error = temp->error | (1 << debtErr);
 				return temp;
 			}
@@ -398,7 +397,7 @@ struct client* setNewLine(char* line) {
 	}
 	if (checkIfAllFieldFull(temp)) {
 		freeNode(temp);
-		printf("Not enough data entered\n");
+		puts("Not enough data entered");
 		return NULL;
 	}
 	checkIfTheDataIsCorrect(temp);
@@ -417,7 +416,7 @@ int enterStrToDate(char* str, struct Date* temp) {
 void writeToFile(struct client* temp, char* nameOfFile) {
 	FILE* fp = fopen(nameOfFile, "a");
 	if (fp == NULL) {
-		printf("There was an error writing to the file\n");
+		puts("There was an error writing to the file");
 		return;
 	}
 	fprintf(fp, "%s,", temp->firstName);
@@ -428,7 +427,7 @@ void writeToFile(struct client* temp, char* nameOfFile) {
 	fprintf(fp, "%02d/%02d/%04d\n", temp->date.day, temp->date.month, temp->date.year);
 
 	fclose(fp);
-	printf("the data was saved successfully.\n");
+	puts("the data was saved successfully.");
 }
 
 void freeNode(struct client* temp) {

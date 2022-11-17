@@ -1,4 +1,3 @@
-#include "Debtors manager.h"
 #include "Header.h"
 
 
@@ -44,38 +43,38 @@ int main() {
 	char* tempChoose; // a temporary variable that will point to the user's choice (select/set/print/qwit)
 	char choosing[MAX_CHOOSE] = { 0 }; //  a variable that will point to the user's choice (select/set/print/qwit)
 	FILE* fp = NULL;
-	char* nameOfFile = (char*)malloc(sizeof(char) * strlen(NAME_FILE) + 1);
-	if (nameOfFile != NULL) { // if the assignment was successful
-		strcpy(nameOfFile, NAME_FILE);
-		fp = fopen(nameOfFile, "r");
-	}
+	char* defaultName = NAME_FILE;
+	char* nameOfFile = defaultName;
+	fp = fopen(nameOfFile, "r");
 	while (fp == NULL) { // if opening the file was not successful
-		free(nameOfFile); //
-		printf("Failed to open file\n");
-		printf("Please enter a new name to file: ");
+		puts("Failed to open file");
+		fputs("Please enter a new name to file: ", stdout);
 		nameOfFile = readinput(stdin); // receiving from the user a new name for the file
 		if (nameOfFile == NULL) // if the allocation was unsuccessful
 			continue;
 		fp = fopen(nameOfFile, "r");
 	}
 
-	CreateList(&head, &headError, fp); // Creating the lists of client and errors by reading from the file
+	createList(&head, &headError, fp); // Creating the lists of client and errors by reading from the file
 	printList(head, "list"); //printing the client list
-	printf("\nERROR LIST\n");
-	printList(headError, "error list"); // printing the error list
+	if (headError != NULL) {
+		puts("ERROR LIST");
+		printList(headError, "error list"); // printing the error list
+	}
 	fclose(fp);
 
 	printUserInstructions();
 
 	while (strcmp(choosing, "quit") != 0) { // stop condition when user enters quit
-		printf("--->\n");
+		puts("--->");
 		queriesLine = readinput(stdin);// receiving from the user and allocating memory
 		tempChoose = oneQuerie(&head, &headError, queriesLine, nameOfFile); // analyzes the user request
 		strcpy(choosing, tempChoose); // so that it is possible to free tempChoose
 		free(tempChoose);
 		free(queriesLine);
 	}
-	free(nameOfFile);
+	if(nameOfFile != defaultName)
+		free(nameOfFile);
 	freeList(&head);
 	freeList(&headError);
 	return 0;

@@ -1,6 +1,9 @@
 
 #pragma once
-#include "Debtors manager.h"
+#ifndef _Utilities
+#define _Utilities
+
+#include "Debtors_manager.h"
 
 //-------------------------------------------------------------------------------------------------------
 
@@ -27,3 +30,6 @@ char* removeAllSpaces(char* input);
 
 
 //-------------------------------------------------------------------------------------------------------
+
+
+#endif
